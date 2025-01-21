@@ -1,4 +1,3 @@
-
 # Scheduler, Webserver, MetadataDb, Executor, Worker (of DAGs)
 ## LocalExecutor, CeleryExecutor, KubernatesExcutor
 ## Tasks are stored as script file in designated directories
