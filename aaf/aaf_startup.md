@@ -22,7 +22,11 @@ pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}
 airflow standalone
 ```
 
-- 8080
+#### Create Users
+
+```console
+airflow users create -e <email> -f yun -l inze -p <pwd> -r Admin -u <username> -v
+```
 
 ## Container-based usage
 
