@@ -1,6 +1,8 @@
 ## Standalone Installation
 
-#### Cudf랑 충돌
+#### Cudf랑 충돌 있음
+
+- Proceed with cudf uninstallation if you're unlikely use the library 
 
 ```console
 AIRFLOW_VERSION=2.10.4
@@ -19,14 +21,26 @@ pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}
 #### First Run
 
 ```console
+airflow info && airflow version
+```
+
+```console
 airflow standalone
 ```
 
-#### Create Users
+#### Manage Users
 
 ```console
-airflow users create -e <email> -f yun -l inze -p <pwd> -r Admin -u <username> -v
+airflow users create -e <email> -p <pwd> -r Admin -u <username>
+airflow users list
 ```
+
+#### Watch Connections
+
+```console
+airflow connections list
+```
+
 
 ## Container-based usage
 
