@@ -5,17 +5,26 @@ import streamlit as st
 
 import util
 
-from sklearn.preprocessing import OneHotEncoder,PowerTransformer,StandardScaler
+from sklearn.preprocessing import (
+    OneHotEncoder,PowerTransformer,StandardScaler
+)
 from pycombat import Combat
 from scipy.stats import zscore
 from PIL.Image import open
 
-ind=['C_ID','epid','session_id','R_ID','session','ck_dcode','AS_DATA_CLASS','AS_EDATE']
+# Unusable Columns
+ind=[
+    'C_ID','epid','session_id','R_ID','session','ck_dcode','AS_DATA_CLASS','AS_EDATE'
+]
+
+# Exotic Columns
 exotic=["cretn_tr1","cretn_tr2"]
+
+# Grouper Column
 grouper="cohort"
 
 @st.cache_data
-def read(deta_path="./res/")->pd.DataFrame:
+def read(deta_path="./res")->pd.DataFrame:
     deta_path=[q.path for q in os.scandir(deta_path) if q.name.endswith(".f")]
     
     return pd.concat(
@@ -30,20 +39,36 @@ def get_col(deta)->tuple:
     deta_contigous_col=deta.select_dtypes(float).columns.to_list()
     deta_vol_col=[q for q in deta_contigous_col if q[-1].isnumeric() and q not in exotic]
     
-    return deta_site,deta_categorical_col,deta_contigous_col,deta_vol_col
+    return (
+        deta_site,
+        deta_categorical_col,
+        deta_contigous_col,
+        deta_vol_col
+    )
 
 @st.cache_data
 def get_var(deta=None)->tuple:
-    # reading discrete feathers induces forced type inferring
+    # Reading discrete feather files induces forced type inferring
     
     if deta is None:
         deta=read()
     
     deta.index=range(deta.shape[0])
     
-    deta_site,deta_categorical_col,deta_contigous_col,deta_vol_col=get_col(deta)
+    (
+        deta_site,
+        deta_categorical_col,
+        deta_contigous_col,
+        deta_vol_col
+    )=get_col(deta)
     
-    return deta,deta_site,deta_categorical_col,deta_contigous_col,deta_vol_col
+    return (
+        deta,
+        deta_site, 
+        deta_categorical_col,
+        deta_contigous_col,
+        deta_vol_col
+    )
 
 @st.cache_data
 def transform(
@@ -75,7 +100,7 @@ def transform(
             )
         ],axis=1)
     
-    elif how=="batch correction (covariate: gender, age)":
+    elif how=="pyCombat (covariate: gender, age)":
         coder=OneHotEncoder()
         transformer=PowerTransformer()
         stabiliser=Combat()
@@ -128,7 +153,7 @@ def transform(
 
 @st.cache_data
 def get_noe_image(deta_path)->dict:
-    return {q.name.replace(".png",""):open(q.path) for q in os.scandir(deta_path) if q.name.endswith(".png")}
+    return {q.name.replace('.png',''):open(q.path) for q in os.scandir(deta_path) if q.name.startswith('.png')}
 
 @st.cache_data
 def trim(
@@ -137,10 +162,11 @@ def trim(
     gizun=.001
 )->pd.DataFrame:
     '''Took 569 ± 23.9 ms '''
+
     deta_vol_col=[q for q in deta.columns if q in deta_vol_col]
     
     _lim=lambda q:(q.quantile(gizun), q.quantile(1-gizun))
-    lim:dict=deta[deta_vol_col].apply(_lim).to_dict("list")
+    lim=deta[deta_vol_col].apply(_lim).to_dict("list")
     
     for col in lim.keys():
         _arr=deta.loc[:,col].to_numpy(dtype=np.float32)

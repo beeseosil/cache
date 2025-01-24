@@ -26,7 +26,7 @@ st.markdown('''
 transform_method={
     "None":"no transformation",
     "Log Transform":"log transformed",
-    "Batch Correction":"batch correction (covariate: gender, age)",
+    "Batch Correction":"pyCombat (covariate: gender, age)",
     "Divide by Intracranial Volume":"divided by intracranial volume",
 }
 
@@ -114,7 +114,7 @@ for select in zip(
     )
 
 page_description,page_volumetry,page_about=st.tabs(
-    ["Overview","Radiomic Features","About"]
+    ["Overview","Per-region Values","About"]
 )
 
 with page_description:
@@ -273,5 +273,5 @@ with page_about:
 foot=st.container(border=False)
 with foot:
     st.markdown("""
-        **© 2024 <https://www.nih.go.kr>**
+        **© 2025 <https://www.nih.go.kr>**
     """,unsafe_allow_html=True)

@@ -1,6 +1,8 @@
 
 import numpy as np
 import pandas as pd
+from time import time
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
@@ -10,8 +12,9 @@ import plotly.io
 import plotly.graph_objects as go
 import plotly.express
 
-from time import time
-from scipy.stats import t,ttest_ind,f_oneway
+from scipy.stats import (
+    t,ttest_ind,f_oneway
+)
 from pingouin import ptests
 from sklearn.decomposition import PCA
 
@@ -38,7 +41,7 @@ code={
         {1:"DM",2:"Non-DM"}
 }
 
-gStyleConstraint=dict(
+plot_style_constraint=dict(
     zeroline=False,
     zerolinewidth=1,
     zerolinecolor="lightgray",
@@ -49,10 +52,13 @@ gStyleConstraint=dict(
 
 plt.rcParams['font.family']="Serif"
 
-def claim(title,string=" ")->None:
-    print("ㅡ"*10,title)
+
+def claim(title,string="")->None:
+    dt=datetime.now()
+    print("ㅡ"*3, dt, "ㅡ"*3, title)
     print(string)
     return 
+
 
 def lap(func,**kwargs):
     t0=time()
@@ -60,25 +66,31 @@ def lap(func,**kwargs):
     claim(f"{func.__repr__()} took",f"{time()-t0:.2f} s")
     return result
 
-def sanitise(
-    q:str,
-)->str:
+
+def sanitise(q:str,)->str:
     if (q!="sex" and len(q)<3):
         return q.upper()
+
+    elif (q=="mmse"):
+        return q.upper()
+
     elif (q=="htn"):
         return "HTN"
-    elif (q=="MMSE"):
-        return q
+
     elif (q.startswith("APOE")):
         return "APOE OPI"
+
     elif (q[:3]=="icv"):
         return "ICV"
+
     return " ".join([w for w in q.split("_") if w.isalpha()]).title()
+
 
 def tagClassObsCount(
     noe:pd.DataFrame,
     cat:str
 )->dict:
+
     obs_castable=np.can_cast(noe.loc[:,cat].values,"f8")
     obs_count=noe.loc[:,cat].value_counts().to_dict()
     
@@ -96,17 +108,21 @@ def tagClassObsCount(
     
     return obs_count_tag_view
 
+
 def getNoeImage(
     noeImage:dict,
     selectionState
 ):
+
     _orgVarName=selectionState[0]
     if _orgVarName in noeImage.keys():
         return noeImage[_orgVarName]
     else:
         return None
 
+
 def projectNoeImage(graph,image):
+
     graph.add_layout_image(dict(
         source=image,
         xref="paper",
@@ -117,7 +133,9 @@ def projectNoeImage(graph,image):
         sizey=.10,
         opacity=.7
     ))
+
     return graph
+
 
 def multiBox(
     noe:pd.DataFrame,
@@ -165,11 +183,11 @@ def multiBox(
         legend_title=f"{c[1]}",
         xaxis={
             "title":f"{c[1]}",
-            **gStyleConstraint
+            **plot_style_constraint
         },
         yaxis={
             "title":f"{y[1]}",
-            **gStyleConstraint
+            **plot_style_constraint
         },
         margin={
             "t":0,
@@ -179,11 +197,13 @@ def multiBox(
     
     return title,graph
 
+
 def _f(
     noe:pd.DataFrame,
     c:tuple,
     y:tuple
 )->tuple:
+
     x=noe.loc[:,[c[0],y[0]]]
     cats=x.loc[:,c[0]].unique()
     
@@ -194,13 +214,13 @@ def _f(
 
     return fTestResult
 
+
 def sign(x):
-    if len(x)>0:
-        if x[0]=="*":
-            return "background-color:#d9d9d9"
-    
+    if len(x)>0 and x[0]=="*":
+        return "background-color:#d9d9d9"
     if not x:
         return 
+
 
 def intergroupTt(
     noe:pd.DataFrame,
@@ -208,6 +228,7 @@ def intergroupTt(
     y:tuple,
     star=True
 )->pd.DataFrame:
+
     x=pd.pivot(
         noe.loc[:,[c[0],y[0]]],
         columns=c[0],
@@ -222,6 +243,7 @@ def intergroupTt(
     
     return intergroupTtestResultTitle,intergroupTtestResult
 
+
 def scatterTrajectory(
     noe,
     c,
@@ -229,6 +251,7 @@ def scatterTrajectory(
     y,
     traject="lowess",
 ):
+
     if x[0]==y[0]:
         raise Exception(f"You're attempting to assign same variable '{x[0]}' to both axes.")
     
@@ -261,11 +284,11 @@ def scatterTrajectory(
         legend_title=f"{c[1]}",
         xaxis={
             "title":f"{x[1]}",
-            **gStyleConstraint
+            **plot_style_constraint
         },
         yaxis={
             "title":f"{y[1]}",
-            **gStyleConstraint
+            **plot_style_constraint
         },
         margin={
             "t":0,
@@ -274,6 +297,7 @@ def scatterTrajectory(
     )
     
     return title,graph
+
 
 def decompose(
     noe:pd.DataFrame,
@@ -300,8 +324,6 @@ def decompose(
     explainedRatio=(Reducer.explained_variance_ratio_)
 
     categorical_count=tagClassObsCount(noe, c[0])
-    
-    claim("xxxxxxxxxxxx",categorical_count)
 
     fig,ax=plt.subplots(figsize=(4,4))
     
@@ -320,7 +342,6 @@ def decompose(
             edgecolor="none"
         )
         labels.append(categorical_count[t[0]].replace("<br>","\n"))
-        
     
     ax.set_xlabel(f"PC1 ({explainedRatio[0]*100:.1f}%)",fontsize=6)
     ax.set_ylabel(f"PC2 ({explainedRatio[1]*100:.1f}%)",fontsize=6)
@@ -342,10 +363,15 @@ def decompose(
 
 def get_length(thinner):
     ratio=32/193
-    return ratio*len(thinner)
+    return ratio * len(thinner)
 
 
-def draw_violin(deta,value_column,group_column="cohort"):
+def draw_violin(
+    deta,
+    value_column,
+    group_column="cohort"
+):
+
     categoricalObsCount=tagClassObsCount(deta, group_column)
 
     data=deta.melt(group_column,value_column,"Variable","Value")
@@ -387,6 +413,7 @@ def _tt(
     cat:str,
     var:str,
 )->tuple:
+
     cats=noe.loc[:,cat].unique()
 
     sieves={q:noe.loc[:,cat].eq(q) for q in cats}
@@ -394,11 +421,13 @@ def _tt(
     
     return tuple(q for q in ttest_ind(*sieved,nan_policy="omit"))
 
+
 def _getEs(
     noe,
     cat:str,
     var:str
 ):
+
     x=noe.groupby(cat)[var].agg(["mean","std"]).T
     muDiff=np.diff(x.loc["mean",:].to_numpy(np.float32))
     sigmaSqrt=np.sqrt(
@@ -406,6 +435,7 @@ def _getEs(
     )
     
     return (muDiff/sigmaSqrt)[0]
+
 
 def _getEsci(
     noe,
@@ -430,7 +460,6 @@ def _getEsci(
         np.array([d-(critical*se),d+(critical*se)],np.float32)
     )
 
-def isVs(
-    x:pd.Series
-)->bool:
+
+def isVs(x:pd.Series)->bool:
     return len(x.sample(frac=.1).unique())==2
